@@ -6,14 +6,35 @@
     <title>皮卡丘好像想說說什麼？ ⚡️</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
     <style>
-        body { margin: 0; background: radial-gradient(circle, #fff 0%, #eee 100%); display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
+        body {
+            margin: 0;
 
-        /* AR 模型容器 */
+            /* 👇 這裡就是換背景的魔法 👇 */
+            /* 如果你要放圖片，把 url 裡面的檔名換成你的背景圖路徑 */
+            background-image: url('background.jpg');
+            background-size: cover;      /* 讓圖片無死角填滿整個螢幕 */
+            background-position: center; /* 讓圖片置中，主角不被卡掉 */
+            background-repeat: no-repeat;/* 防止圖片太小像磁磚一樣狂拼貼 */
+            /* 👆 換背景魔法結束 👆 */
+
+            /* 如果暫時沒圖片，可以先加個備用底色確保文字清楚 */
+            background-color: #f0f8ff;
+
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: sans-serif;
+        }
+
+        /* 3D 模型容器 */
         model-viewer {
             width: 100%;
             height: 70vh;
-            display: none; /* 點擊前先隱藏 */
+            display: none;
             --progress-bar-color: #ffcc00;
+            position: relative; /* 讓裡面的按鈕可以對齊右上角 */
         }
 
         #startBtn {
@@ -31,7 +52,26 @@
 
         #startBtn:active { transform: scale(0.95); }
 
-        .hint { margin-top: 20px; color: #666; font-size: 14px; }
+        /* 加了文字陰影，以免你換了太花的背景圖導致字看不清楚 */
+        .hint { margin-top: 20px; color: #333; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 2px white; }
+
+        /* 🎵 新的播放聲音按鈕樣式 */
+        #playSoundBtn {
+            background-color: rgba(255, 255, 255, 0.9); /* 微透明感 */
+            border-radius: 8px;
+            border: none;
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            padding: 10px 15px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            cursor: pointer;
+            display: none; /* 一開始跟著模型一起隱藏 */
+            z-index: 10;
+        }
+        #playSoundBtn:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
@@ -40,48 +80,44 @@
     <p class="hint">（請確認手機未靜音）</p>
 
     <model-viewer
-    id="pikaModel"
-    src="pikachu/source/pikachu2.glb"
-    ar
-    ar-modes="webxr scene-viewer quick-look"
-    camera-controls
-    auto-rotate
-    autoplay
+        id="pikaModel"
+        src="pikachu/source/pikachu2.glb"
+        camera-controls
+        auto-rotate
+        autoplay
+        scale="0.9 0.9 0.9"
+        orientation="0 0 0"
+        shadow-intensity="1"
+        environment-image="neutral"
+        exposure="1">
 
-    scale="0.9 0.9 0.9"
-    ar-scale="fixed"
+        <button id="playSoundBtn">🔊 聽聽皮卡丘說什麼</button>
+    </model-viewer>
 
-    orientation="0 0 0"
-
-    shadow-intensity="1"
-    environment-image="neutral"
-    exposure="1">
-
-    <button slot="ar-button" style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; padding: 10px; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-        👋 在現實中召喚皮卡丘
-    </button>
-</model-viewer>
-
-    <!-- <audio id="pikaAudio" src="voice.mp3"></audio> -->
+    <audio id="pikaAudio" src="voice.mp3"></audio>
 
     <script>
         const btn = document.getElementById('startBtn');
         const model = document.getElementById('pikaModel');
-        // const audio = document.getElementById('pikaAudio');
+        const audio = document.getElementById('pikaAudio');
         const hint = document.querySelector('.hint');
+        const playSoundBtn = document.getElementById('playSoundBtn');
 
+        // 第一階段：打開禮物
         btn.addEventListener('click', () => {
-            // 1. 隱藏按鈕與提示
             btn.style.display = 'none';
             hint.style.display = 'none';
 
-            // 2. 顯示模型並播放聲音
             model.style.display = 'block';
-            // audio.play();
+            playSoundBtn.style.display = 'block'; // 秀出右上角的播放按鈕
 
-            // 3. 強制確保動畫從第一個動作開始 (Action 1)
-            // model-viewer 預設會播放第一個動作，若要精確指定名稱，可使用：
             model.animationName = 'Idle';
+        });
+
+        // 第二階段：點擊右上角播放聲音
+        playSoundBtn.addEventListener('click', () => {
+            audio.currentTime = 0; // 每次點擊都從頭開始講
+            audio.play();
         });
     </script>
 
