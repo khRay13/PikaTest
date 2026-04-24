@@ -40,23 +40,27 @@
     <p class="hint">（請確認手機未靜音）</p>
 
     <model-viewer
-        id="pikaModel"
-        src="pikachu/source/pikachu2.glb"
-        ar
-        ar-modes="webxr scene-viewer quick-look"
-        camera-controls
-        auto-rotate
-        autoplay
-        shadow-intensity="1"
-        environment-image="neutral"
-        exposure="1"
-        scale = "0.5 0.5 0.5"
-        ar-scale = "fixed">
+    id="pikaModel"
+    src="pikachu/source/pikachu2.glb"
+    ar
+    ar-modes="webxr scene-viewer quick-look"
+    camera-controls
+    auto-rotate
+    autoplay
 
-        <button slot="ar-button" style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; padding: 10px;">
-            👋 在現實中召喚皮卡丘
-        </button>
-    </model-viewer>
+    scale="5.0 5.0 5.0"
+    ar-scale="fixed"
+
+    orientation="-90deg 0 0"
+
+    shadow-intensity="1"
+    environment-image="neutral"
+    exposure="1">
+
+    <button slot="ar-button" style="background-color: white; border-radius: 4px; border: none; position: absolute; top: 16px; right: 16px; padding: 10px; font-size: 16px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+        👋 在現實中召喚皮卡丘
+    </button>
+</model-viewer>
 
     <!-- <audio id="pikaAudio" src="voice.mp3"></audio> -->
 
