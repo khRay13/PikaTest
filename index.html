@@ -81,6 +81,33 @@
             /* 加入淡入淡出動畫感 */
             transition: opacity 0.3s ease;
         }
+
+        /* 💖 雙擊飄浮愛心的專屬樣式 */
+        .floating-heart {
+            position: fixed; /* 絕對定位於螢幕 */
+            font-size: 40px; /* 愛心的大小 */
+            pointer-events: none; /* 讓愛心不會擋住你點擊背後的模型 */
+            z-index: 9999; /* 確保它在畫面最上層 */
+            user-select: none; /* 防止手機連點時不小心反白到元素 */
+
+            /* 啟動動畫：名稱、時間、速度曲線、播放完畢停留在最後狀態 */
+            animation: floatUp 1.2s ease-out forwards;
+        }
+
+        /* 向上飄移並淡出的動畫軌跡 */
+        @keyframes floatUp {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 1;
+            }
+            20% {
+                transform: translate(-50%, -80%) scale(1.2); /* 瞬間變大製造彈出感 */
+            }
+            100% {
+                transform: translate(-50%, -200px) scale(1); /* 往上飄 200px */
+                opacity: 0; /* 逐漸透明消失 */
+            }
+        }
     </style>
 </head>
 <body>
@@ -189,6 +216,53 @@
                 subtitleBox.style.opacity = 1;
             }
         });
+
+        // 💖 雙擊愛心噴發系統
+        let lastTapTime = 0; // 記錄上一次點擊的時間
+
+        // 監聽整個視窗的點擊/觸控事件
+        window.addEventListener('pointerdown', (e) => {
+            const currentTime = new Date().getTime();
+            const tapLength = currentTime - lastTapTime;
+
+            // 如果兩次點擊時間間隔小於 300 毫秒 (0.3秒)，判定為雙擊
+            if (tapLength > 0 && tapLength < 300) {
+                // 取得點擊座標
+                const x = e.clientX;
+                const y = e.clientY;
+
+                // 呼叫製造愛心的函數
+                spawnHeart(x, y);
+            }
+            lastTapTime = currentTime;
+        });
+
+        function spawnHeart(x, y) {
+            // 建立一個新的 div 元素
+            const heart = document.createElement('div');
+            heart.classList.add('floating-heart');
+
+            // 你可以放多種不同的 Emoji 讓它隨機出現，增加驚喜感！
+            const emojis = ['❤️', '💖', '✨', '💕'];
+            const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
+            heart.innerText = randomEmoji;
+
+            // 將愛心放到手指點擊的位置
+            heart.style.left = `${x}px`;
+            heart.style.top = `${y}px`;
+
+            // 隨機左右稍微傾斜，讓飄浮感更自然
+            const randomRotation = (Math.random() - 0.5) * 40; // -20度 到 +20度
+            heart.style.transform = `rotate(${randomRotation}deg)`;
+
+            // 加進畫面中
+            document.body.appendChild(heart);
+
+            // 1.2 秒後 (配合 CSS 動畫時間) 將愛心從程式碼中刪除，避免畫面變卡
+            setTimeout(() => {
+                heart.remove();
+            }, 1200);
+        }
     </script>
 
 </body>
