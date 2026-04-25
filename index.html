@@ -6,6 +6,47 @@
     <title>皮卡丘的悄悄話 ⚡️</title>
     <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"></script>
     <style>
+        /* ⏳ === 載入畫面專屬樣式 === ⏳ */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #2c3e50; /* 深色背景質感覺好，不刺眼 */
+            z-index: 999999; /* 絕對要在畫面的最最最上層 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 0.5s ease; /* 淡出動畫 */
+        }
+
+        /* 旋轉的皮卡丘色光圈 */
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 8px solid rgba(255, 255, 255, 0.2);
+            border-top: 8px solid #ffcc00; /* 皮卡丘黃 */
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(255, 204, 0, 0.4); /* 發光效果 */
+        }
+
+        /* 呼吸燈文字 */
+        .loading-text {
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        /* ⏳ ========================= ⏳ */
+
         body {
             margin: 0;
             background-image: url('src/background.v2.jpg');
@@ -106,17 +147,9 @@
 
         /* 向上飄移並淡出的動畫軌跡 */
         @keyframes floatUp {
-            0% {
-                transform: translate(-50%, -50%) scale(0.5);
-                opacity: 1;
-            }
-            20% {
-                transform: translate(-50%, -80%) scale(1.2); /* 瞬間變大製造彈出感 */
-            }
-            100% {
-                transform: translate(-50%, -200px) scale(1); /* 往上飄 200px */
-                opacity: 0; /* 逐漸透明消失 */
-            }
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            20% { transform: translate(-50%, -80%) scale(1.2); } /* 瞬間變大製造彈出感 */
+            100% { transform: translate(-50%, -200px) scale(1); opacity: 0; } /* 往上飄並消失 */
         }
 
         /* 🌸 === 道具開啟特效的核心 CSS === 🌸 */
@@ -180,6 +213,11 @@
 </head>
 <body>
 
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <div class="loading-text">Loading... ⚡️</div>
+    </div>
+
     <button id="startBtn">Click Me ⚡️</button>
     <p class="hint">（請確認手機未靜音）</p>
 
@@ -206,6 +244,18 @@
     <audio id="pikaAudio" src="src/FinalVoice.mp3"></audio>
 
     <script>
+        // ⏳ === 載入畫面消除邏輯 === ⏳
+        // window.addEventListener('load') 會耐心等待所有大圖(包含背景)、模型、音檔完全下載完畢
+        window.addEventListener('load', () => {
+            const loadingScreen = document.getElementById('loadingScreen');
+            // 讓它有 0.5 秒的淡出過場，比較高級
+            loadingScreen.style.opacity = '0';
+            // 淡出結束後徹底移除，才不會擋住下方的點擊按鈕
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 500);
+        });
+
         const btn = document.getElementById('startBtn');
         const model = document.getElementById('pikaModel');
         const audio = document.getElementById('pikaAudio');
