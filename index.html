@@ -8,7 +8,7 @@
     <style>
         body {
             margin: 0;
-            background-image: url('src/background.jpg');
+            background-image: url('src/background.v2.jpg');
             background-size: cover;      /* 讓圖片無死角填滿整個螢幕 */
             background-position: center; /* 讓圖片置中，主角不被卡掉 */
             background-repeat: no-repeat;/* 防止圖片太小像磁磚一樣狂拼貼 */
@@ -25,9 +25,9 @@
         model-viewer {
             width: 100%;
             height: 60vh; /* 稍微縮小模型高度，留空間給字幕 */
-            transform: translateY(3vh); /* 把皮卡丘往下推 8% 的螢幕高度 */
+            transform: translateY(3vh); /* 把皮卡丘往下推 3% 的螢幕高度 */
             display: none;
-            position: relative;
+            position: relative; /* 讓裡面的花朵可以使用百分比定位 */
         }
 
         #startBtn {
@@ -44,7 +44,17 @@
         }
 
         #startBtn:active { transform: scale(0.95); }
-        .hint { margin-top: 20px; color: #ccc; font-size: 14px; }
+
+        .hint {
+            margin-top: 20px;
+            color: #ffffff;
+            font-size: 14px;
+            background-color: rgba(10, 10, 10, 0.5);
+            border-radius: 6px;
+            text-align: center;
+            vertical-align: middle;
+            padding: 5px 10px; /* 稍微加點內距讓底色更好看 */
+        }
 
         #playSoundBtn {
             background-color: rgba(255, 255, 255, 0.9);
@@ -108,6 +118,64 @@
                 opacity: 0; /* 逐漸透明消失 */
             }
         }
+
+        /* 🌸 === 道具開啟特效的核心 CSS === 🌸 */
+        #giftFlower {
+            display: none; /* 一開始完全隱藏 */
+            position: absolute; /* 相對於 model-viewer 定位 */
+            width: 15%; /* 使用螢幕寬度的 15%，確保不論電腦手機大小都不會太怪 */
+            max-width: 100px;
+            min-width: 50px;
+
+            /* 道具出現位置 (百分比定位) */
+            top: 45%; /* 距離 model-viewer 頂部 45% 的位置，大約在皮卡丘胸口高度 */
+            left: 20%; /* 距離 model-viewer 左側 20% 的位置，皮卡丘的右側空白處 */
+            transform: translate(-50%, -50%); /* 精確置中 */
+
+            opacity: 0; /* 出現前為透明 */
+            z-index: 5;
+
+            /* 淡入(0.5秒) + 永久飄浮(3秒無限循環) */
+            animation: fadeInFlower 0.5s ease forwards, floatFlower 3s ease-in-out infinite;
+            animation-delay: 0s, 0.5s; /* 飄浮在半秒後才開始無限循環 */
+        }
+
+        /* 道具開啟時的閃白光 CSS 特效 */
+        .white-flash {
+            position: absolute;
+            width: 15%; /* 與花朵同寬 */
+            aspect-ratio: 1; /* 1:1的正方形白光 */
+            background-color: #fff;
+            border-radius: 50%; /* 變成圓形白光 */
+            top: 45%; /* 必須跟花朵的位置完全一樣 */
+            left: 20%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 50px 10px #fff; /* 白光發亮特效 */
+            opacity: 1;
+            z-index: 6; /* 擋在花朵前面 */
+
+            /* 啟動瞬間變大並淡出的白光動畫 */
+            animation: flashOn 0.5s ease-out forwards;
+        }
+
+        /* 1. 白光閃光動畫：瞬間放大並淡出 */
+        @keyframes flashOn {
+            0% { transform: translate(-50%, -50%) scale(0.1); opacity: 1; }
+            30% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
+        }
+
+        /* 2. 花朵淡入動畫 */
+        @keyframes fadeInFlower {
+            0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        }
+
+        /* 3. 寶可夢道具飄浮動畫 (上下浮動無限循環) */
+        @keyframes floatFlower {
+            0%, 100% { transform: translate(-50%, -50%); }
+            50% { transform: translate(-50%, -65%); } /* 向上浮動 */
+        }
     </style>
 </head>
 <body>
@@ -128,6 +196,9 @@
         exposure="1">
 
         <button id="playSoundBtn">🔊 再聽一次</button>
+
+        <img id="giftFlower" src="src/flower.png" alt="Gracidea">
+
     </model-viewer>
 
     <div id="subtitleBox"></div>
@@ -142,8 +213,17 @@
         const playSoundBtn = document.getElementById('playSoundBtn');
         const subtitleBox = document.getElementById('subtitleBox');
 
-        // 🎬 【關鍵設定】你的字幕時間軸清單 (秒數: 台詞)
-        // 請一邊聽你的 voice.mp3，一邊抓秒數填進來
+        // 🌸 綁定花朵元素
+        const flower = document.getElementById('giftFlower');
+
+        // 🌸 【關鍵設定】道具出現的時間軸(秒)
+        // 根據你的字幕，"我手上的花是 Gracidea" 在 43.0 秒出現
+        const flowerShowTime = 43.0;
+
+        // 控制道具開啟動畫的旗標，確保每次播放只閃一次光
+        let flowerAnimationTriggered = false;
+
+        // 🎬 你的字幕時間軸清單
         const subtitles = [
             { time: 0.0, text: "（皮卡皮卡！⚡️）" },
             { time: 1.5, text: "我是皮卡丘，Ray 想要請我跟你說一些話。" },
@@ -165,7 +245,7 @@
             { time: 50.5, text: "謝謝你願意不厭其煩地和他出去走走，" },
             { time: 54.0, text: "謝謝你願意閱讀、聆聽到這裡。" },
             { time: 57.0, text: "（皮卡丘！⚡️）" },
-            { time: 60.0, text: "" } // 最後放個空的，讓聲音播完後字幕消失
+            { time: 57.7, text: "" } // 最後放個空的，讓聲音播完後字幕消失
         ];
 
         // 啟動按鈕
@@ -191,12 +271,29 @@
         function playAudioWithSubtitles() {
             audio.currentTime = 0;
             subtitleBox.innerText = ""; // 清空舊字幕
+
+            // 🌸 重置道具開關與狀態 (讓重播時道具可以再次華麗登場)
+            flowerAnimationTriggered = false;
+            flower.style.display = 'none';
+            flower.style.opacity = 0;
+
+            // 如果之前有白光殘留，先清除乾淨
+            const oldFlash = document.querySelector('.white-flash');
+            if(oldFlash) oldFlash.remove();
+
             audio.play();
         }
 
-        // ⏱️ 監聽音檔播放時間，自動切換字幕
+        // ⏱️ 監聽音檔播放時間，自動切換字幕 & 觸發道具
         audio.addEventListener('timeupdate', () => {
             const currentTime = audio.currentTime;
+
+            // 🌸 === [核心功能] 道具開啟特效 === 🌸
+            // 當播放時間到達 43.0 秒，且還沒觸發過特效時執行
+            if (currentTime >= flowerShowTime && !flowerAnimationTriggered) {
+                trigger_item_open_effect();
+                flowerAnimationTriggered = true; // 鎖死開關
+            }
 
             // 找出當前時間對應的最後一筆字幕
             let currentText = "";
@@ -216,6 +313,23 @@
                 subtitleBox.style.opacity = 1;
             }
         });
+
+        // 🌸 === 【核心 JS 函數】道具開啟特效流程 === 🌸
+        function trigger_item_open_effect() {
+            // 1. 產生一個白光 CSS 元素
+            const flash = document.createElement('div');
+            flash.classList.add('white-flash');
+            // 將白光加入到 model-viewer 畫布內部
+            model.appendChild(flash);
+
+            // 2. 顯示花朵（透明度會由 CSS animation 完美接手處理）
+            flower.style.display = 'block';
+
+            // 3. 0.5 秒後 (配合白光閃光的 CSS 時間)，將白光元素從程式碼中刪除，保持效能
+            setTimeout(() => {
+                flash.remove();
+            }, 500);
+        }
 
         // 💖 雙擊愛心噴發系統
         let lastTapTime = 0; // 記錄上一次點擊的時間
